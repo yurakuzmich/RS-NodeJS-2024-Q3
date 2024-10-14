@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { stdout } from 'process';
 
-export const listDir = async (dir) => {
+export const handleCommand = async (dir) => {
     try {
         const dirContains = await fs.readdir(dir);
         const files = [];
@@ -9,22 +9,32 @@ export const listDir = async (dir) => {
 
         for (const item of dirContains) {
             const path = `${dir}/${item}`;
-            const stats = await fs.stat(path);
 
-            if (stats.isDirectory()) {
-                dirs.push({ item, type: 'dir' });
-            } else {
-                files.push({ item, type: 'file' });
+            try {
+                const stats = await fs.stat(path);
+
+                if (stats.isDirectory()) {
+                    dirs.push({ item, type: 'dir' });
+                } else {
+                    files.push({ item, type: 'file' });
+                }
+            } catch (err) {
+                if (err.code === 'EPERM') {
+                    // stdout.write(`Skipping inaccessible directory: ${item}\n`); TODO: add logger
+                } else {
+                    console.error(`Operation failed`);
+                }
             }
         }
 
         const result = [...dirs, ...files];
         const renderedResult = result.map((item, index) => {
             return renderLine(item.item, index, item.type);
-        })
+        });
 
         stdout.write(`\n${renderedResult.join('\n')}\n`);
     } catch (err) {
+        
         console.error(err);
     } 
 }

@@ -3,21 +3,6 @@ import { promises as fs } from 'fs';
 import { modulesList as allowedCommands } from './modules-list.js';
 const messages = await loadMessages();
 
-// const allowedCommands = [
-//     "up",
-//     "cd",
-//     "ls",
-//     "cat",
-//     "add",
-//     "rn",
-//     "cp",
-//     "mv",
-//     "rm",
-//     "hash",
-//     "compress",
-//     "decompress"
-// ];
-
 export const parseCommand = (command) => {
     const commandParts = command.split(' ');
     const commandBody = commandParts[0];

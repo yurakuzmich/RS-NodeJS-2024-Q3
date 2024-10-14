@@ -10,5 +10,6 @@ export const modulesList = [
     "rm",
     "hash",
     "compress",
-    "decompress"
+    "decompress",
+    "os",
 ];

@@ -2,53 +2,10 @@ import { stdin, stdout } from 'process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-import  { modulesList } from './core/modules-list.js';
-import { parseCommand, parseMessage } from './core/index.js';
-// import { listDir, catFile } from './modules/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const loadModules = async () => {
-    const loadedModules = {};
-
-    for (const module of modulesList) {
-        const modulePath = path.resolve(__dirname, `./modules/${module}.js`);
-
-        if (fs.existsSync(modulePath)) {
-            try {
-                const moduleURL = new URL(`file://${modulePath}`);
-                const mod = await import(moduleURL);
-                loadedModules[module] = mod;
-            } catch (error) {
-                console.error(`Error loading ${module} module: ${error}`);
-            }
-        } else {
-            console.error(`Module not found: ${module}`);
-        }
-    }
-
-    return loadedModules;
-};
+import { parseCommand, parseMessage, loadModules, exitApp } from './core/index.js';
 
 const appModules = await loadModules();
-
-// modulesList.forEach(async (module) => {
-//     const modulePath = path.resolve(__dirname, `./modules/${module}.js`);
-
-//     if (fs.existsSync(modulePath)) {
-//         try {
-//             const modURL = new URL(`file://${modulePath}`);
-//             const mod = await import(modURL);
-//         } catch (error) {
-//             console.error(`Error loading ${module} module: ${error}`);
-//         }
-//     } else {
-//         console.error(`Module not found: ${module}`);
-//     };
-// });
 
 const args = process.argv.slice(2);
 let currentDir = os.homedir();
@@ -67,77 +24,86 @@ args.forEach((arg) => {
     // }
 });
 
+console.log("USERNAME: ", username);
+console.log("ARGS: ", args);
+
 messages = JSON.parse(fs.readFileSync(`./src/messages/${lang}.json`, 'utf8'));
 
 stdout.write(parseMessage(messages.WELCOME, ['username', 'currentdir'], [username, currentDir]));
 
-stdin.on('data', (command) => {
+stdin.on('data', async (command) => {
     const commandString = command.toString().trim();
     const parsedCommand = parseCommand(commandString);
+
+    if(commandString === '.exit') {
+        exitApp(parseMessage(messages.GOODBYE, ['username'], [username]));
+    }
+
     if (!parsedCommand) {
         stdout.write(parseMessage(messages.INVALID_COMMAND, ['command'], [commandString]) + "\n");
         return;
     };
 
-    switch (parsedCommand.command) {
-        case 'up':
-            // currentDir = path.resolve(currentDir, '..');
-            break;
-        case 'cd':
-            // currentDir = path.resolve(currentDir, parsedCommand.args[0]);
-            break;
-        case 'ls':
-            appModules.ls.listDir(currentDir);
-            break;
-        default:
-            stdout.write(parseMessage(messages.INVALID_COMMAND, ['command'], [commandString]) + "\n");
-            break;
+    try {
+        switch (parsedCommand.command) {
+            case 'up':
+                currentDir = await appModules.up.handleCommand(currentDir);
+                break;
+            case 'cd':
+                currentDir = await appModules.cd.handleCommand(currentDir, parsedCommand.args[0]);
+                break;
+            case 'ls':
+                await appModules.ls.handleCommand(currentDir);
+                break;
+            case 'cat':
+                await appModules.cat.handleCommand(path.join(currentDir, parsedCommand.args[0]));
+                break;
+            case 'add':
+                await appModules.add.handleCommand(currentDir, parsedCommand.args[0]);
+                break;
+            case 'rn':
+                await appModules.rn.handleCommand(currentDir, parsedCommand.args[0], parsedCommand.args[1]);
+                break;
+            case 'cp':
+                await appModules.cp.handleCommand(currentDir, parsedCommand.args[0], parsedCommand.args[1]);
+                break;
+            case 'mv':
+                await appModules.mv.handleCommand(currentDir, parsedCommand.args[0], parsedCommand.args[1]);
+                break;
+            case 'rm':
+                await appModules.rm.handleCommand(currentDir, parsedCommand.args[0]);
+                break;
+            case 'hash':
+                await appModules.hash.handleCommand(path.join(currentDir, parsedCommand.args[0]));
+                break;
+            case 'os':
+                const param = parsedCommand.args[0];
+                await appModules.os.handleCommand(param);
+                break;
+            case 'compress':
+                await appModules.compress.handleCommand(
+                    currentDir, 
+                    path.join(currentDir, parsedCommand.args[0]), 
+                    path.join(currentDir, parsedCommand.args[1])
+                );
+                break;
+            case 'decompress':
+                await appModules.decompress.handleCommand(
+                    currentDir, 
+                    path.join(currentDir, parsedCommand.args[0]), 
+                    path.join(currentDir, parsedCommand.args[1])
+                );
+                break;
+            default:
+                stdout.write(parseMessage(messages.INVALID_COMMAND, ['command'], [commandString]) + "\n");
+        }
+    } catch (error) {
+        console.error(`Error executing command: ${err.message}`);
     }
 
-    // stdout.write(`${parsedCommand.command} \n`);
-    // stdout.write(`${ls.listDir(currentDir)} \n`);
+    stdout.write(`${username} ${currentDir}: `);
 });
 
-// function parseMessage(message, fields, values) {
-//     fields.forEach((field, index) => {
-//         message = message.replace(`%${field}%`, values[index]);
-//     });
-
-//     return message;
-// }
-
-// function setLanguage() {
-
-// }
-
-// function parseCommand(command) {
-//     command = command.toString().trim();
-//     console.log('Command is: ', command);
-//     const allowedCommands = [
-//         "up",
-//         "cd",
-//         "ls",
-//         "cat",
-//         "add",
-//         "rn",
-//         "cp",
-//         "mv",
-//         "rm",
-//         "hash",
-//         "compress",
-//         "decompress"
-//     ];
-
-//     const commandParts = command.split(' ');
-//     command = commandParts[0];
-//     args = commandParts.slice(1);
-
-//     command = allowedCommands.includes(command) ? 
-//             command + '...\n':
-//             parseMessage(messages.INVALID_COMMAND, ['command'], command) + '...\n';
-
-//     return {
-//         command,
-//         args,
-//     };
-// }
+process.on('SIGINT', () => {
+    exitApp(parseMessage(messages.GOODBYE, ['username'], [username]));
+});

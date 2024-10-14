@@ -2,5 +2,7 @@
     "WELCOME": "Welcome to the File Manager, %username%!  \n _______________________________________________ \n You are currently in %currentdir% \n \n",
     "GOODBYE": "Thank you for using File Manager, %username%, goodbye!",
 
-    "INVALID_COMMAND": "Invalid command: %command%"
+    "OPERATION_FAILED": "Operation failed",
+
+    "INVALID_COMMAND": "Invalid input: %command%"
 }
