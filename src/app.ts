@@ -14,7 +14,6 @@ const server = http.createServer((req, res) => {
   const urlSegments = req.url?.split('/');
   const urlParams = urlSegments?.slice(3);
   console.log('urlSegments', urlSegments);
-  console.log('urlParams', urlParams);
 
   if (!urlSegments || urlSegments[1] !== 'api' || urlSegments[2] !== 'users') {
     res.statusCode = 404;
@@ -54,7 +53,7 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
           try {
             const userData = JSON.parse(putData);
-            apiData = userService.updateUser(userData);
+            apiData = userService.updateUser(id, userData);
             res.end(JSON.stringify(apiData));
           } catch (error) {
             res.statusCode = 400;

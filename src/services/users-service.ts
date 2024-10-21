@@ -2,6 +2,7 @@ import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import { User } from '../models/user-model';
 import { users as usersList } from './../mock-data/users'
 import { ERROR_MESSAGES } from '../models/error-codes';
+import { validateUser } from '../utils/validate-user';
 
 export class UsersService {
     private users: User[];
@@ -33,16 +34,29 @@ export class UsersService {
     }
 
     public createUser(user: User) {
+        if (!validateUser(user)) {
+            const error = new Error("Invalid User Data");
+            error.name = ERROR_MESSAGES.INVALID_DATA_FORMAT;
+            throw error;
+        }
+
         user.id = uuidv4();
         this.users.push(user);
+
         return user;
     }
 
-    public updateUser(user: User) {
+    public updateUser(id: string, user: User) {
+        if(!id || !uuidValidate(id)) {
+            const error = new Error("Invalid user ID");
+            error.name = ERROR_MESSAGES.INVALID_ID;
+            throw error;
+        }
+
         const index = this.users.findIndex(u => u.id === user.id);
         
         if (index !== -1) {
-            this.users[index] = user;
+            this.users[index] = {...this.users[index], ...user};
         }
         return user;
     }

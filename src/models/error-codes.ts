@@ -6,4 +6,5 @@ export enum ERROR_CODES {
 export enum ERROR_MESSAGES {
     INVALID_ID = 'Invalid user id',
     USER_NOT_EXIST = 'User does not exist',
+    INVALID_DATA_FORMAT = 'Invalid data format',
 }
